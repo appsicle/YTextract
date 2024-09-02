@@ -8,6 +8,7 @@ const anthropic = new Anthropic({
 
 export const getClaudeResponse = async (videoTranscript: string) => {
   const fullPrompt = getDefaultPrompt(videoTranscript);
+  console.log('start claude');
   const res =  await anthropic.messages.create({
     model: "claude-3-haiku-20240307",
     max_tokens: 3163,
@@ -28,5 +29,6 @@ export const getClaudeResponse = async (videoTranscript: string) => {
       }
     ]
   });
+  console.log(res);
   return res.content[0].text.trim();
 }

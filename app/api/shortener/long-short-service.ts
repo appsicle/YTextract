@@ -11,6 +11,7 @@ export const convertLongToShort = async (cache, videoId: string) => {
     const transcript = await extractCaptions(videoId);
     const transcriptResult = Object.values(transcript).toString();
     const msg = await getClaudeResponse(transcriptResult);
+    console.log(msg);
     try {
       JSON.parse(msg);
     } catch (e) {
