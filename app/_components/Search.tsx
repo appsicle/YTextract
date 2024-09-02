@@ -119,9 +119,9 @@ const SearchBar = ({ onFetch }) => {
             <h2 className="text-white text-xl font-bold mt-4 mb-2">Points 🚀</h2>
             <p className="text-gray-400">{JSON.stringify(data.points)}</p>
 
-            <h2 className="text-white text-xl font-bold mt-4 mb-2">Transcript 📜</h2>
+            <h2 className="text-white text-xl font-bold mt-4 mb-2">Example full video script 📜</h2>
             <ul className="list-disc list-inside text-gray-400">
-              <p className="text-gray-400">{JSON.stringify(data.transcript)}</p>
+              <p className="text-gray-400" dangerouslySetInnerHTML={{ __html: data.transcript.replace(/\[(.*?)\]/g, '<span style="color: #a4a4ff;">$1</span>') }}></p>
 
             </ul>
           </div>

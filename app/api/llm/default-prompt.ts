@@ -20,7 +20,7 @@ Please analyze the transcript carefully and provide the following elements in yo
 5. Full Video Transcript: Create a revised and enhanced version of the original transcript, optimized for video presentation. Include the following elements:
    a. Clear structure with introduction, main points, and conclusion
    b. Smooth transitions between topics
-   d. Example descriptions for images and video clips to include as visual guides in the video. Use emojis everytime a video clip or image example is mentioned to help describe what the image or video would look like. THIS IS MANDATORY.
+   d. Example descriptions for images and video clips to include as visual guides in the video. Use emojis everytime a video clip or image example is mentioned to help describe what the image or video would look like next to an actual description of the image/clip. THIS IS MANDATORY.
 Remember to carefully analyze the provided transcript and use your creativity to enhance it for an engaging video presentation. Focus on making the content more dynamic and visually appealing while maintaining its core message and information.
 
 Please format your response using VALID JSON. NO QUOTES OR LINE BREAKS OR NEW LINES ALLOWED ANYWHERE INSIDE THE JSON VALUES. THE VALUE MUST BE A SINGLE LINE STRING. THIS OUTPUT MUST WORK WITH JSON.Parse(). THE JSON MUST NOT BE NESTED. THE VALUE OF EACH KEY MUST BE A STRING, NOT ANOTHER OBJECT OR ARRAY.:
