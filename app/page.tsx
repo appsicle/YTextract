@@ -32,7 +32,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#191a1a] text-white">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-12">
-          <h1 className="text-2xl font-bold"><span className="text-[#ff2200]">YT</span>Extract</h1>
+          <a href="/"><h1 className="text-2xl font-bold"><span className="text-[#ff2200]">YT</span>Extract</h1></a>
         </header>
 
         <main>
