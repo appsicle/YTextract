@@ -21,14 +21,11 @@ Please analyze the transcript carefully and provide the following elements in yo
    a. Clear structure with introduction, main points, and conclusion
    b. Smooth transitions between topics
    c. Engaging language and pacing suitable for a video format
-   d. Annotations for visual elements, such as:
-      - [IMAGE: description of image to show]
-      - [CLIP: description of video clip to insert]
-      - [TRANSITION: description of transition effect]
+   d. Annotations for visual elements, such as images, clips, transition effects
    e. Timestamps for major sections or key points
 Remember to carefully analyze the provided transcript and use your creativity to enhance it for an engaging video presentation. Focus on making the content more dynamic and visually appealing while maintaining its core message and information.
 
-Please format your response using the following JSON:
+Please format your response using VALID JSON. NO QUOTES OR WEIRD CHARACTERS ALLOWED ANYWHERE INSIDE THE JSON VALUES. THIS OUTPUT MUST WORK WITH JSON.Parse().:
 {
   "hook": [Insert identified hook here],
   "title": [Insert created title here],
@@ -38,3 +35,4 @@ Please format your response using the following JSON:
 }
 `
 }
+
