@@ -9,26 +9,33 @@ const anthropic = new Anthropic({
 export const getClaudeResponse = async (videoTranscript: string) => {
   const fullPrompt = getDefaultPrompt(videoTranscript);
   console.log('start claude');
-  const res =  await anthropic.messages.create({
-    model: "claude-3-haiku-20240307",
-    max_tokens: 3163,
-    temperature: 0,
-    messages: [
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": fullPrompt
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": "Here is the JSON requested:"
-      }
-    ]
-  });
+  try {
+    const res =  await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 3163,
+      temperature: 0,
+      messages: [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": fullPrompt
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": "Here is the JSON requested:"
+        }
+      ]
+    });
+  } catch (err) {
+    console.error('claude error');
+    console.error(err);
+    throw err;
+  }
+
   console.log(res);
   return res.content[0].text.trim();
 }
