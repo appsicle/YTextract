@@ -105,28 +105,24 @@ const SearchBar = ({ onFetch }) => {
             <Search size={20} />
           </button>}
       </form>
-      {isLoading && <h2 className="text-center mt-5 text-xl">AI is at work...</h2>} 
-        <div className="text-left">
+      {isLoading && <h2 className="text-center mt-5 text-xl">AI is at work...</h2>}
+      <div className="text-left">
         {error && <p className="mt-2 text-red-500">{error}</p>}
         {data && (
           <div className="mt-2">
             <h2 className="text-white text-xl font-bold mb-2">Hook 🎣</h2>
-            <p className="text-gray-400">{data.hook}</p>
+            <p className="text-gray-400">{JSON.stringify(data.hook)}</p>
             <h2 className="text-white text-xl font-bold mt-4 mb-2">Title 📚</h2>
-            <p className="text-gray-400">{data.title}</p>
+            <p className="text-gray-400">{JSON.stringify(data.title)}</p>
             <h2 className="text-white text-xl font-bold mt-4 mb-2">Thumbnail Description 📷</h2>
-            <p className="text-gray-400">{data.thumbnail}</p>
+            <p className="text-gray-400">{JSON.stringify(data.thumbnail)}</p>
             <h2 className="text-white text-xl font-bold mt-4 mb-2">Points 🚀</h2>
-            <ul className="list-disc list-inside text-gray-400">
-              {data.points.map((point, index) => (
-                <li key={index}>{point}</li>
-              ))}
-            </ul>
+            <p className="text-gray-400">{JSON.stringify(data.points)}</p>
+
             <h2 className="text-white text-xl font-bold mt-4 mb-2">Transcript 📜</h2>
             <ul className="list-disc list-inside text-gray-400">
-              {data.transcript.map((line, index) => (
-                <li key={index}>{line}</li>
-              ))}
+              <p className="text-gray-400">{JSON.stringify(data.transcript)}</p>
+
             </ul>
           </div>
         )}
