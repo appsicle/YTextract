@@ -34,7 +34,7 @@ const mockData: ApiData = {
   ]
 };
 
-const SearchBar = () => {
+const SearchBar = ({ onFetch }) => {
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
   const [data, setData] = useState<ApiData | undefined>(undefined); // Added to store API response data
@@ -77,6 +77,7 @@ const SearchBar = () => {
       const data = await response.json();
       console.log('API response:', data);
       setData(data); // Store the API response data
+      onFetch();
     } catch (err) {
       setError('Failed to fetch transcript. Please try again.');
       console.error('API error:', err);
@@ -86,41 +87,42 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#191a1a]">
-      <div className="w-full max-w-2xl px-4">
-        <form onSubmit={handleSubmit} className="relative">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Paste YouTube URL here..."
-            className="w-full py-3 px-4 pr-12 bg-[#202222] text-white placeholder-gray-400 outline-none ring-2 ring-blue-500 rounded-lg"
-          />
-          {isLoading ? <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"><ClipLoader color={'white'} loading={isLoading} /></div> :
-            <button
-              type="submit"
-              disabled={isLoading} // Disable button when loading
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-            >
-              <Search size={20} />
-            </button>}
-        </form>
+    <>
+      <form onSubmit={handleSubmit} className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Paste YouTube URL here..."
+          className="w-full py-3 px-4 pr-12 bg-[#202222] text-white placeholder-gray-400 outline-none ring-2 ring-blue-500 rounded-lg"
+        />
+        {isLoading ? <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center"><ClipLoader color={'white'} loading={isLoading} /></div> :
+          <button
+            type="submit"
+            disabled={isLoading} // Disable button when loading
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+          >
+            <Search size={20} />
+          </button>}
+      </form>
+      {isLoading && <h2 className="text-center mt-5 text-xl">AI is at work...</h2>} 
+        <div className="text-left">
         {error && <p className="mt-2 text-red-500">{error}</p>}
         {data && (
           <div className="mt-2">
-            <h2 className="text-white text-xl font-bold mb-2">Hook</h2>
+            <h2 className="text-white text-xl font-bold mb-2">Hook 🎣</h2>
             <p className="text-gray-400">{data.hook}</p>
-            <h2 className="text-white text-xl font-bold mt-4 mb-2">Title</h2>
+            <h2 className="text-white text-xl font-bold mt-4 mb-2">Title 📚</h2>
             <p className="text-gray-400">{data.title}</p>
-            <h2 className="text-white text-xl font-bold mt-4 mb-2">Thumbnail Description</h2>
+            <h2 className="text-white text-xl font-bold mt-4 mb-2">Thumbnail Description 📷</h2>
             <p className="text-gray-400">{data.thumbnail}</p>
-            <h2 className="text-white text-xl font-bold mt-4 mb-2">Points</h2>
+            <h2 className="text-white text-xl font-bold mt-4 mb-2">Points 🚀</h2>
             <ul className="list-disc list-inside text-gray-400">
               {data.points.map((point, index) => (
                 <li key={index}>{point}</li>
               ))}
             </ul>
-            <h2 className="text-white text-xl font-bold mt-4 mb-2">Transcript</h2>
+            <h2 className="text-white text-xl font-bold mt-4 mb-2">Transcript 📜</h2>
             <ul className="list-disc list-inside text-gray-400">
               {data.transcript.map((line, index) => (
                 <li key={index}>{line}</li>
@@ -129,7 +131,7 @@ const SearchBar = () => {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 
