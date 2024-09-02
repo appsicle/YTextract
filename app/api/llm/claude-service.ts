@@ -13,7 +13,7 @@ export const getClaudeResponse = async (videoTranscript: string) => {
   try {
     res = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
-      max_tokens: 6000,
+      max_tokens: 4096,
       temperature: 0,
       messages: [
         {
