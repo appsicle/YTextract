@@ -1,9 +1,3 @@
-// const [showInfo, setShowInfo] = useState(true);
-
-//   const handleDataFetch = () => {
-//     setShowInfo(false);
-//   };
-
 "use client";
 
 import { Hero, HowItWorks, Features, Navbar } from "@/components/index";

@@ -7,6 +7,12 @@ const anthropic = new Anthropic({
 });
 
 export const getClaudeResponse = async (videoTranscript: string) => {
+  console.log('key');
+
+  console.log(process.env.ANTHROPIC_API_KEY);
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return;
+  }
   const fullPrompt = getDefaultPrompt(videoTranscript);
   console.log('start claude');
   let res;
