@@ -106,7 +106,7 @@ export default function Page() {
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,0,0,0.1),transparent_50%)]" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,0,0,0.2),transparent_50%)]" />
-        </div>
+        </div> 
       </section>
 
       <HowItWorks />
