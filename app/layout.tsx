@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "YTExtract",
-  description: "Youtube video to short form video idea",
+  description: "Youtube video insights",
 };
 
 export default function RootLayout({
