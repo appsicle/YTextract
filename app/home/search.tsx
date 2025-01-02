@@ -12,8 +12,10 @@ export const SearchBar = () => {
     e.preventDefault();
 
     const videoId = validateUrl(query);
-    router.push(`/transcript?videoId=${encodeURIComponent(videoId)}`);
+    router.push(`/analysis?videoId=${encodeURIComponent(videoId)}`);
   };
+
+  // TODO: Make all routes come from some consts file
 
   return (
     <>
