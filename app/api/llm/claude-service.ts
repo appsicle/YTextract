@@ -33,7 +33,7 @@ export const getClaudeResponse = async (videoTranscript: string) => {
         },
         {
           "role": "assistant",
-          "content": "Here is the JSON requested:"
+          "content": "Here is the summary:"
         }
       ]
     });

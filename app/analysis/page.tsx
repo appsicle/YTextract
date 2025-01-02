@@ -1,8 +1,6 @@
 "use client";
-import ClipLoader from "react-spinners/ClipLoader";
-import { Search } from "lucide-react";
-import { SearchResults } from "@/app/transcript/search/search-results";
-import { fetchVideoData } from "./search/search-utils";
+import { AnalysisRenderer } from "./analysis-renderer";
+import { fetchVideoData } from "../home/search-utils";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -19,7 +17,7 @@ const handleFetchVideoData = async (videoId: string) => {
   }
 };
 
-export default function TranscriptOperationsPage() {
+export default function AnalysisContainer() {
   const searchParams = useSearchParams();
   const [data, setData] = useState();
   const [isLoading, setIsLoading] = useState(false);
@@ -46,19 +44,5 @@ export default function TranscriptOperationsPage() {
     getData();
   }, [searchParams]);
 
-  return (
-    <>
-      {/* {JSON.stringify(data)} */}
-      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-        {isLoading ? (
-          <ClipLoader color="white" loading={true} />
-        ) : (
-          <button type="submit" className="text-gray-400 hover:text-white">
-            <Search size={20} />
-          </button>
-        )}
-      </div>
-      <SearchResults error={error} data={data} />
-    </>
-  );
+  return <AnalysisRenderer error={error} data={data} />;
 }

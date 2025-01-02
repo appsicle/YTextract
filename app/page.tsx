@@ -1,6 +1,6 @@
 "use client";
 
-import { Hero, HowItWorks, Features, Navbar } from "@/components/index";
+import { Hero, HowItWorks, Features, Navbar } from "./home";
 
 export default function Page() {
   return (

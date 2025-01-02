@@ -1,8 +1,7 @@
 import Image from "next/image";
-import logo from "@/app/ytlogo.png";
+import logo from "./ytlogo.png";
 import { Button, Input, SearchBar } from "@/components/index";
 import { ChevronRight } from "lucide-react";
-import { useState } from "react";
 
 export function Hero() {
   return (

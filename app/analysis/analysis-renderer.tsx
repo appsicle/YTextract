@@ -2,46 +2,46 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { Slider } from "@/components/ui/slider";
-import { TranscriptRenderer } from "../transcript-renderer";
+import { DualEndedSlider } from "@/components/DualSlider";
+import { TranscriptRenderer } from "./analysis-transcript-renderer";
+import {
+  getSegmentsInRange,
+  formatTime,
+  breakIntoChunks,
+} from "./analysis-utils";
+import Markdown from "react-markdown";
 
-const breakIntoChunks = (
-  segments: Array<{ text: string }>,
-  chunkSize: number = 500
-): string[] | undefined => {
-  if (!segments?.length) return;
-  // Combine all text from segments
-  const fullText = segments.map((segment) => segment.text).join(" ");
-
-  const words = fullText.split(" ");
-  const chunks: string[] = [];
-  let currentChunk: string[] = [];
-  let currentLength = 0;
-
-  words.forEach((word) => {
-    if (currentLength + word.length > chunkSize && currentChunk.length > 0) {
-      chunks.push(currentChunk.join(" "));
-      currentChunk = [];
-      currentLength = 0;
-    }
-    currentChunk.push(word);
-    currentLength += word.length + 1; // +1 for the space
+async function getSummary(transcript: string) {
+  const response = await fetch(`/api/summarize`, {
+    method: "POST",
+    body: transcript,
   });
+  if (!response.ok) throw new Error("API request failed");
+  return await response.json();
+}
 
-  if (currentChunk.length > 0) {
-    chunks.push(currentChunk.join(" "));
-  }
-
-  return chunks;
-};
-
-export function SearchResults({ error, data }) {
+export function AnalysisRenderer({ error, data }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeRange, setTimeRange] = useState([0, 100]);
   const [showSummary, setShowSummary] = useState(false);
-  const textChunks = breakIntoChunks(data);
-  console.log(textChunks);
-  const handleSummarize = () => {
+  const [summary, setSummary] = useState("");
+
+  const lastSecond = data?.length
+    ? Math.ceil(data[data.length - 1].endTimeMs / 1000)
+    : 0;
+  const filteredSegments = getSegmentsInRange(data, timeRange[0], timeRange[1]);
+  const textChunks = breakIntoChunks(filteredSegments);
+
+  const handleSummarize = async () => {
+    if (!textChunks?.length) {
+      return;
+    }
+    if (showSummary) {
+      setShowSummary(false);
+    }
+    const transcriptInTimeRange = textChunks?.join(" ");
+    const { data } = await getSummary(transcriptInTimeRange);
+    setSummary(data);
     setShowSummary(true);
   };
 
@@ -49,7 +49,6 @@ export function SearchResults({ error, data }) {
     <div className="min-h-screen bg-[#1C1C1C] text-white">
       <div className="container mx-auto p-4 max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Text Analysis App</h1>
-
         {/* Search Bar */}
         <div className="relative mb-6">
           <Input
@@ -64,21 +63,18 @@ export function SearchResults({ error, data }) {
             size={20}
           />
         </div>
-
-        {/* Time Range 13 */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Time Range</h2>
-          {/* <Slider
+          <DualEndedSlider
             min={0}
-            max={100}
-            step={1}
+            max={lastSecond}
+            step={5}
             value={timeRange}
-            onValueChange={setTimeRange}
-            className="w-full"
-          /> */}
+            onChange={setTimeRange}
+          />
           <div className="flex justify-between mt-2 text-sm text-gray-400">
-            <span>{timeRange[0]}:00</span>
-            <span>{timeRange[1]}:00</span>
+            <span>{formatTime(timeRange[0])}</span>
+            <span>{formatTime(timeRange[1])}</span>
           </div>
         </div>
 
@@ -94,12 +90,7 @@ export function SearchResults({ error, data }) {
         {showSummary && (
           <div className="bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg p-4 mb-6">
             <h2 className="text-xl font-semibold mb-2">Summary</h2>
-            <p className="text-gray-300">
-              This is a placeholder for the summary of the selected text range.
-              In a fully functional app, this would contain an AI-generated
-              summary of the content between {timeRange[0]}:00 and{" "}
-              {timeRange[1]}:00.
-            </p>
+            <Markdown className="prose prose-invert">{summary}</Markdown>
           </div>
         )}
         {textChunks?.length ? <TranscriptRenderer data={textChunks} /> : null}

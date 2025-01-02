@@ -1,10 +1,10 @@
-import { Analysis } from "./ui/analysis";
+import { VideoProcessingLoader } from "./VideoProcessingLoader";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Features } from "./feature-section";
-import { Hero } from "./hero";
-import { HowItWorks } from "./horizontal-timeline";
-import { Navbar } from "./navbar";
-import { SearchBar } from "../app/transcript/search/search";
+import { Features } from "../app/home/feature-section";
+import { Hero } from "../app/home/hero";
+import { HowItWorks } from "../app/home/horizontal-timeline";
+import { Navbar } from "../app/home/navbar";
+import { SearchBar } from "../app/home/search";
 
-export { Analysis, Button, Input, Features, Hero, HowItWorks, Navbar, SearchBar };
+export { VideoProcessingLoader, Button, Input, Features, Hero, HowItWorks, Navbar, SearchBar };

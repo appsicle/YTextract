@@ -1,6 +1,6 @@
 import { Play } from "lucide-react";
 
-export default function Analysis() {
+export default function VideoProcessingLoader() {
   <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 lg:-mt-24">
     <div className="relative">
       <div className="absolute inset-0 bg-gradient-to-r from-[#FF0000]/20 to-blue-500/20 rounded-3xl blur-xl" />
