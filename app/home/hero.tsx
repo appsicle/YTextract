@@ -1,7 +1,6 @@
 import Image from "next/image";
 import logo from "./ytlogo.png";
 import { Button, Input, SearchBar } from "@/components/index";
-import { ChevronRight } from "lucide-react";
 
 export function Hero() {
   return (
@@ -25,17 +24,7 @@ export function Hero() {
 
           <div className="relative max-w-xl mx-auto">
             <div className="absolute -inset-1 bg-[#FF0000]/20 rounded-lg blur-lg" />
-            <div className="relative flex gap-2">
-              {/* <Input
-                placeholder="Paste YouTube URL here..."
-                className="flex-1 h-12 bg-black/40 border-0 focus-visible:ring-1 focus-visible:ring-white/20 rounded-lg"
-              /> */}
               <SearchBar />
-              <Button className="h-12 px-6 bg-[#FF0000] hover:bg-[#FF0000]/90 text-white transition-colors duration-200">
-                Convert
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </div>
       </div>
