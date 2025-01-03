@@ -19,12 +19,6 @@ export function Features() {
           <div className="space-y-8 lg:space-y-12">
             {[
               {
-                icon: Search,
-                title: "Indexed Search",
-                description: "Blazing fast search against any video transcript",
-                color: "from-yellow-500 to-orange-500",
-              },
-              {
                 icon: Sparkles,
                 title: "AI-Powered Summary",
                 description:
@@ -32,16 +26,25 @@ export function Features() {
                 color: "from-blue-500 to-cyan-500",
               },
               {
+                icon: Search,
+                title: "Indexed Search",
+                description: "Coming soon...",
+                // description: "Blazing fast search against any video transcript",
+                color: "from-yellow-500 to-orange-500",
+              },
+              {
                 icon: List,
                 title: "Engaging Hooks",
-                description:
-                  "Convert long form to short form with hook recommendations",
+                description: "Coming soon...",
+                // description:
+                //   "Convert long form to short form with hook recommendations",
                 color: "from-green-500 to-emerald-500",
               },
               {
                 icon: BarChart,
                 title: "VideoGPT",
-                description: "Ask questions and get insights on video content",
+                description: "Coming soon...",
+                // description: "Ask questions and get insights on video content",
                 color: "from-purple-500 to-pink-500",
               },
             ].map((feature) => (

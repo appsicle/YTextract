@@ -1,6 +1,6 @@
 import Image from "next/image";
 import logo from "./ytlogo.png";
-import { Button, Input, SearchBar } from "@/components/index";
+import { SearchBar } from "@/components/index";
 
 export function Hero() {
   return (
