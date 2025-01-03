@@ -38,7 +38,7 @@ export function AnalysisRenderer({ error, data }) {
       return;
     }
 
-    setIsSummaryLoading(true)
+    setIsSummaryLoading(true);
     const transcriptInTimeRange = textChunks?.join(" ");
     const { data } = await getSummary(transcriptInTimeRange);
     setIsSummaryLoading(false);
@@ -81,6 +81,7 @@ export function AnalysisRenderer({ error, data }) {
 
         {/* Summarize Button */}
         <Button
+          disabled={isSummaryLoading}
           className="mb-6 bg-red-600 hover:bg-red-700 text-white border-0"
           onClick={handleSummarize}
         >
