@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,25 +10,26 @@ import {
   breakIntoChunks,
 } from "./analysis-utils";
 import Markdown from "react-markdown";
+import { VideoProcessingLoader } from "@/components/VideoProcessingLoader";
 
 async function getSummary(transcript: string) {
   const response = await fetch(`/api/summarize`, {
     method: "POST",
     body: transcript,
   });
+
   if (!response.ok) throw new Error("API request failed");
   return await response.json();
 }
 
 export function AnalysisRenderer({ error, data }) {
+  const lastSecond = useMemo(() => {
+    return data?.length ? Math.ceil(data[data.length - 1].endTimeMs / 1000) : 0;
+  }, [data]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeRange, setTimeRange] = useState([0, 100]);
-  const [showSummary, setShowSummary] = useState(false);
+  const [timeRange, setTimeRange] = useState([0, lastSecond]);
   const [summary, setSummary] = useState("");
-
-  const lastSecond = data?.length
-    ? Math.ceil(data[data.length - 1].endTimeMs / 1000)
-    : 0;
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const filteredSegments = getSegmentsInRange(data, timeRange[0], timeRange[1]);
   const textChunks = breakIntoChunks(filteredSegments);
 
@@ -36,13 +37,12 @@ export function AnalysisRenderer({ error, data }) {
     if (!textChunks?.length) {
       return;
     }
-    if (showSummary) {
-      setShowSummary(false);
-    }
+
+    setIsSummaryLoading(true)
     const transcriptInTimeRange = textChunks?.join(" ");
     const { data } = await getSummary(transcriptInTimeRange);
+    setIsSummaryLoading(false);
     setSummary(data);
-    setShowSummary(true);
   };
 
   return (
@@ -50,7 +50,8 @@ export function AnalysisRenderer({ error, data }) {
       <div className="container mx-auto p-4 max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Text Analysis App</h1>
         {/* Search Bar */}
-        <div className="relative mb-6">
+        {/* TODO: Search */}
+        {/* <div className="relative mb-6">
           <Input
             type="text"
             placeholder="Search text..."
@@ -62,7 +63,7 @@ export function AnalysisRenderer({ error, data }) {
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             size={20}
           />
-        </div>
+        </div> */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Time Range</h2>
           <DualEndedSlider
@@ -87,9 +88,13 @@ export function AnalysisRenderer({ error, data }) {
         </Button>
 
         {/* Summary Section */}
-        {showSummary && (
+        {isSummaryLoading ? (
+          <div className="mb-6">
+            <VideoProcessingLoader />
+          </div>
+        ) : null}
+        {summary && (
           <div className="bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg p-4 mb-6">
-            <h2 className="text-xl font-semibold mb-2">Summary</h2>
             <Markdown className="prose prose-invert">{summary}</Markdown>
           </div>
         )}

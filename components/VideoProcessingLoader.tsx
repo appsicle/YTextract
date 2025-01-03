@@ -1,10 +1,10 @@
 import { Play } from "lucide-react";
 
-export default function VideoProcessingLoader() {
-  <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 lg:-mt-24">
-    <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-[#FF0000]/20 to-blue-500/20 rounded-3xl blur-xl" />
+export function VideoProcessingLoader() {
+  return (
+    <div className="container max-w-7xl mx-auto">
       <div className="relative bg-black/40 rounded-2xl p-8 border border-white/10">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#FF0000]/20 to-blue-500/20 rounded-3xl blur-xl -z-10" />
         <div className="grid gap-6">
           <div className="bg-black/40 p-4 rounded-lg">
             <div className="flex items-center space-x-4">
@@ -12,8 +12,8 @@ export default function VideoProcessingLoader() {
                 <Play className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-medium">Video Analysis</p>
-                <p className="text-sm text-zinc-400">Processing content...</p>
+                <p className="font-medium">Video Summary</p>
+                <p className="text-sm text-zinc-400">AI at work...</p>
               </div>
             </div>
           </div>
@@ -24,5 +24,5 @@ export default function VideoProcessingLoader() {
         </div>
       </div>
     </div>
-  </div>;
+  );
 }

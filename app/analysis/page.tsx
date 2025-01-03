@@ -3,6 +3,7 @@ import { AnalysisRenderer } from "./analysis-renderer";
 import { fetchVideoData } from "../home/search-utils";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingPage } from "@/components/LoadingPage";
 
 const handleFetchVideoData = async (videoId: string) => {
   try {
@@ -30,6 +31,7 @@ export default function AnalysisContainer() {
     const getData = async () => {
       setError("");
 
+      setIsLoading(true);
       const { data, error } = await handleFetchVideoData(videoId);
 
       if (error) {
@@ -44,5 +46,5 @@ export default function AnalysisContainer() {
     getData();
   }, [searchParams]);
 
-  return <AnalysisRenderer error={error} data={data} />;
+  return data ?<AnalysisRenderer error={error} data={data} /> : <LoadingPage />;
 }
