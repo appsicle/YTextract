@@ -1,4 +1,5 @@
 import { Search, Sparkles, List, BarChart } from "lucide-react";
+import featureImage from "./feature-img.png";
 import Image from "next/image";
 
 export function Features() {
@@ -66,9 +67,9 @@ export function Features() {
           </div>
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-xl" />
-            <div className="relative bg-zinc-900 rounded-2xl p-8 lg:p-12 border border-white/10">
+            <div className="relative bg-zinc-900 rounded-2xl border-white/10">
               <Image
-                src="/placeholder.svg?height=400&width=400"
+                src={featureImage}
                 width={400}
                 height={400}
                 alt="YTExtract dashboard"
