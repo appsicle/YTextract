@@ -1,17 +1,17 @@
-export const TranscriptRenderer = ({ data }) => {
+interface TranscriptRendererProps {
+  data: string[];
+}
+
+export const TranscriptRenderer = ({ data }: TranscriptRendererProps) => {
   return (
     <>
       {/* Text Content */}
-      <div className="bg-[#2A2A2A] border border-[#3A3A3A] p-6 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Video Transcript</h2>
-        {data.map((chunk: string) => {
-          return (
-            <>
-              <p className="text-gray-300 leading-relaxed">{chunk}</p>
-              <br />
-            </>
-          );
-        })}
+      <div className="space-y-2">
+        {data.map((chunk: string, index: number) => (
+          <p key={index} className="text-zinc-300 leading-relaxed">
+            {chunk}
+          </p>
+        ))}
       </div>
     </>
   );

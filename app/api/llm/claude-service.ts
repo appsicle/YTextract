@@ -1,48 +1,27 @@
-import { getDefaultPrompt } from './default-prompt';
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  // defaults to process.env["ANTHROPIC_API_KEY"]
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { getDefaultPrompt } from "./default-prompt";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const getClaudeResponse = async (videoTranscript: string) => {
-  console.log('key');
+  console.log("key");
 
-  console.log(process.env.ANTHROPIC_API_KEY);
-  if (!process.env.ANTHROPIC_API_KEY) {
+  console.log(process.env.GEMINI_API_KEY);
+  if (!process.env.GEMINI_API_KEY) {
     return;
   }
   const fullPrompt = getDefaultPrompt(videoTranscript);
-  console.log('start claude');
-  let res;
+
   try {
-    res = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
-      max_tokens: 4096,
-      temperature: 0,
-      messages: [
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": fullPrompt
-            }
-          ]
-        },
-        {
-          "role": "assistant",
-          "content": "Here is the summary:"
-        }
-      ]
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const result = await model.generateContent(fullPrompt);
+    const text = result.response.text();
+
+    console.log(text);
+    return text.trim();
   } catch (err) {
-    console.error('claude error');
+    console.error("gemini error");
     console.error(err);
     throw err;
   }
-
-  console.log(res);
-  return res?.content[0]?.text?.trim();
-}
+};

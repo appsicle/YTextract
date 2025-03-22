@@ -1,4 +1,4 @@
-interface TranscriptSegment {
+export interface TranscriptSegment {
   startTimeMs: string;
   endTimeMs: string;
   text: string;
