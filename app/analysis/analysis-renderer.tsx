@@ -110,7 +110,7 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
           className="flex flex-col gap-6"
         >
           {/* Video Info Header */}
-          <div className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl">
+          <div className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl mt-8">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-[#FF0000] to-[#FF5050] rounded-lg flex items-center justify-center shadow-lg">
