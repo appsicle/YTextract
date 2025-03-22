@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, FileText, Clock, Sparkles, Youtube, ExternalLink } from "lucide-react";
+import { Search, FileText, Clock, Sparkles, Youtube, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DualEndedSlider } from "@/components/DualSlider";
@@ -44,9 +44,21 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
   
   const [summary, setSummary] = useState("");
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [selectedSegments, setSelectedSegments] = useState<number[]>([]);
   const filteredSegments = getSegmentsInRange(data, timeRange[0], timeRange[1]);
   const textChunks = breakIntoChunks(filteredSegments);
   const videoId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('videoId') : '';
+
+  // Get segments based on selection
+  const getSelectedTranscript = () => {
+    if (selectedSegments.length === 0) {
+      return textChunks?.join(" "); // Use time range if no segments selected
+    }
+    
+    // Get only selected segments
+    const selectedChunks = selectedSegments.map(index => textChunks[index]);
+    return selectedChunks.join(" ");
+  };
 
   const handleSummarize = async () => {
     if (!textChunks?.length) {
@@ -54,15 +66,32 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
     }
 
     setIsSummaryLoading(true);
-    const transcriptInTimeRange = textChunks?.join(" ");
+    const transcriptToSummarize = getSelectedTranscript();
     try {
-      const { data } = await getSummary(transcriptInTimeRange);
+      const { data } = await getSummary(transcriptToSummarize);
       setSummary(data);
     } catch (error) {
       console.error("Error summarizing:", error);
     } finally {
       setIsSummaryLoading(false);
     }
+  };
+
+  const toggleSegmentSelection = (index: number) => {
+    setSelectedSegments(prev => 
+      prev.includes(index) 
+        ? prev.filter(i => i !== index) 
+        : [...prev, index]
+    );
+  };
+
+  const selectAllSegments = () => {
+    const allIndices = textChunks.map((_, index) => index);
+    setSelectedSegments(allIndices);
+  };
+
+  const clearSelection = () => {
+    setSelectedSegments([]);
   };
 
   return (
@@ -134,18 +163,68 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
               <span className="px-3 py-1 bg-zinc-700/50 rounded-full">{formatTime(timeRange[0])}</span>
               <span className="px-3 py-1 bg-zinc-700/50 rounded-full">{formatTime(timeRange[1])}</span>
             </div>
-            
-            <div className="mt-6 flex justify-end">
-              <Button
-                disabled={isSummaryLoading}
-                className="bg-gradient-to-r from-[#FF0000] to-[#FF5050] hover:shadow-lg hover:shadow-[#FF0000]/20 border-0 transition-all duration-200"
-                onClick={handleSummarize}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {isSummaryLoading ? "Summarizing..." : "Summarize Selected Range"}
-              </Button>
-            </div>
           </motion.div>
+
+          {/* Transcript Section with Selectable Paragraphs */}
+          {textChunks?.length ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-[#FF0000]" />
+                  <h2 className="text-lg font-semibold">Transcript</h2>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={selectAllSegments}
+                    className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800"
+                  >
+                    Select All
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearSelection}
+                    className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800"
+                  >
+                    Clear Selection
+                  </Button>
+                  <Button
+                    disabled={isSummaryLoading || selectedSegments.length === 0}
+                    className="bg-gradient-to-r from-[#FF0000] to-[#FF5050] hover:shadow-lg hover:shadow-[#FF0000]/20 border-0 transition-all duration-200 text-xs"
+                    onClick={handleSummarize}
+                    size="sm"
+                  >
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    {isSummaryLoading ? "Summarizing..." : "Summarize Selection"}
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                  {textChunks.map((chunk, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => toggleSegmentSelection(index)}
+                      className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                        selectedSegments.includes(index) 
+                          ? 'bg-zinc-700/70 border border-[#FF5050]/50' 
+                          : 'bg-zinc-800/50 border border-zinc-700/30 hover:bg-zinc-700/30'
+                      }`}
+                    >
+                      <p className="text-sm text-zinc-300">{chunk}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
 
           {/* Summary Section */}
           {isSummaryLoading ? (
@@ -169,24 +248,6 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
               </div>
               <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
                 <Markdown className="prose prose-invert max-w-none prose-p:leading-relaxed prose-p:my-3 prose-h3:text-zinc-300 prose-h2:text-white prose-li:text-zinc-300">{summary}</Markdown>
-              </div>
-            </motion.div>
-          ) : null}
-
-          {/* Transcript Section */}
-          {textChunks?.length ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <FileText className="w-5 h-5 text-[#FF0000]" />
-                <h2 className="text-lg font-semibold">Transcript</h2>
-              </div>
-              <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
-                <TranscriptRenderer data={textChunks} />
               </div>
             </motion.div>
           ) : null}
