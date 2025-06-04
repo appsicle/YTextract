@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClaudeResponse } from "../llm";
+import { getGeminiResponse } from "../llm";
 
 export async function POST(request: NextRequest) {
   try {
-    const text = await request.text();
-    console.log(text);
-    const response = await getClaudeResponse(text);
-    console.log(response);
+    const body = await request.json();
+    const transcript = body.transcript;
+    const granularity = body.granularity || "Standard Analysis"; // Default if not provided
+
+    if (!transcript) {
+      return NextResponse.json({ error: "Transcript is required" }, { status: 400 });
+    }
+
+    console.log(`Received transcript (length: ${transcript.length}), Granularity: ${granularity}`);
+    const response = await getGeminiResponse(transcript, granularity);
+    // console.log("Response from Gemini:", response); // Potentially very verbose
     return NextResponse.json({ data: response });
-  } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json({ error }, { status: 500 });
+  } catch (error: any) {
+    console.error("Full error in /api/summarize:", error); // Log full error to server console
+    // Return a generic error message to the client
+    return NextResponse.json({ error: "Failed to process the request. Please try again." }, { status: 500 });
   }
 }

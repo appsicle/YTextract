@@ -9,7 +9,7 @@ interface LoadingPageProps {
 
 export function LoadingPage({ 
   message = 'Processing your video...', 
-  submessage = 'This will only take a moment' 
+  submessage = 'this might take a few moments.'
 }: LoadingPageProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-zinc-900 to-black relative overflow-hidden">
