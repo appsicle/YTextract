@@ -18,8 +18,16 @@ export const validateUrl = (url: string) => {
   return videoId;
 };
 
-export const fetchVideoData = async (videoId: string) => {
-  const response = await fetch(`/api/transcript?videoId=${videoId}`);
-  if (!response.ok) throw new Error("API request failed");
+export const analyzeVideoDirectly = async (youtubeUrl: string, prompt?: string) => {
+  const response = await fetch(`/api/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ 
+      youtubeUrl, 
+      prompt: prompt || "Please provide a comprehensive analysis of this video including: 1) Overall Summary, 2) Key points and highlights, 3) Main topics discussed, 4) Important insights or takeaways" 
+    }),
+  });
+  
+  if (!response.ok) throw new Error("Video analysis failed");
   return await response.json();
 };

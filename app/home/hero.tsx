@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden">
+    <section className="relative h-full pt-32 pb-24 md:pt-48 md:pb-32 overflow-hidden">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center flex flex-col justify-center items-center min-h-[50vh]">
           <motion.div

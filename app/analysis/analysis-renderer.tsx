@@ -88,15 +88,6 @@ const parseGeminiMarkdown = (markdown: string): ParsedAnalysisSections => {
   return sections;
 };
 
-async function getSummary(transcript: string) {
-  const response = await fetch(`/api/summarize`, {
-    method: "POST",
-    body: transcript,
-  });
-
-  if (!response.ok) throw new Error("API request failed");
-  return await response.json();
-}
 
 export function AnalysisRenderer(props: AnalysisRendererProps) {
   const { error: parentError, data, seekToTime } = props; // Destructure props
@@ -142,6 +133,7 @@ export function AnalysisRenderer(props: AnalysisRendererProps) {
     }
     
     // Get only selected segments
+    if (!textChunks) return "";
     const selectedChunks = selectedSegments.map(index => textChunks[index]);
     return selectedChunks.join(" ");
   };
@@ -196,6 +188,7 @@ export function AnalysisRenderer(props: AnalysisRendererProps) {
   };
 
   const selectAllSegments = () => {
+    if (!textChunks) return;
     const allIndices = textChunks.map((_, index) => index);
     setSelectedSegments(allIndices);
   };
@@ -493,8 +486,8 @@ export function AnalysisRenderer(props: AnalysisRendererProps) {
               className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl text-center"
             >
               <Sparkles className="w-8 h-8 text-[#FF0000] mx-auto mb-3" />
-              <p className="text-zinc-300">Select transcript segments and click "Summarize Selection" to generate an AI analysis.</p>
-              <p className="text-xs text-zinc-500 mt-1">If you've already summarized, but see no results, the AI might not have provided a summary for the selection.</p>
+              <p className="text-zinc-300">Select transcript segments and click &quot;Analyze Selection&quot; to generate an AI analysis.</p>
+              <p className="text-xs text-zinc-500 mt-1">If you&apos;ve already summarized, but see no results, the AI might not have provided a summary for the selection.</p>
             </motion.div>
           )}
 
