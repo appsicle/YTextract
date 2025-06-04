@@ -8,16 +8,85 @@ import {
   getSegmentsInRange,
   formatTime,
   breakIntoChunks,
-  TranscriptSegment
+  TranscriptSegment,
+  parseTimestampToSeconds, // Import for timestamp parsing
 } from "./analysis-utils";
 import Markdown from "react-markdown";
 import { VideoProcessingLoader } from "@/components/VideoProcessingLoader";
 import { motion } from "framer-motion";
 
-interface AnalysisRendererProps {
-  error: string | null;
-  data: TranscriptSegment[];
+// Interfaces for parsed sections
+interface ParsedKeyScene {
+  description: string;
+  timestamp?: string;
 }
+
+interface ParsedAnalysisSections {
+  "Overall Summary"?: string;
+  "Key Scenes/Events"?: ParsedKeyScene[];
+  "Objects and Elements"?: string[]; // Assuming list of strings for now
+  "Sentiment Analysis"?: string;
+  "Actionable Insights (if any)"?: string; // Keeping the "(if any)" as it's part of the title
+  [key: string]: any; // For any other sections
+}
+
+interface AnalysisRendererProps {
+  error: string | null; // Error from page.tsx (parent)
+  data: TranscriptSegment[]; // This is the transcript data
+  seekToTime?: (timeInSeconds: number) => void; // Optional seekToTime prop
+}
+
+// Helper function to determine button variant for granularity
+const getButtonVariant = (currentGranularity: string, buttonGranularity: string) => {
+  return currentGranularity === buttonGranularity ? "default" : "outline";
+};
+
+// Parsing function for Gemini response
+const parseGeminiMarkdown = (markdown: string): ParsedAnalysisSections => {
+  const sections: ParsedAnalysisSections = {};
+  if (!markdown) return sections;
+
+  const lines = markdown.split('\n');
+  let currentSectionTitle = "";
+  let currentContent: string[] = [];
+
+  for (const line of lines) {
+    // Assuming section titles are H2 (##)
+    if (line.startsWith('## ')) {
+      if (currentSectionTitle && currentContent.length > 0) {
+        sections[currentSectionTitle] = currentContent.join('\n').trim();
+      }
+      currentSectionTitle = line.substring(3).trim();
+      currentContent = [];
+    } else if (currentSectionTitle) {
+      currentContent.push(line);
+    }
+  }
+  // Add the last section
+  if (currentSectionTitle && currentContent.length > 0) {
+    sections[currentSectionTitle] = currentContent.join('\n').trim();
+  }
+
+  // Further parsing for specific sections
+  if (sections["Key Scenes/Events"] && typeof sections["Key Scenes/Events"] === 'string') {
+    const scenesMd = sections["Key Scenes/Events"] as string;
+    const sceneItems = scenesMd.split(/^\s*\*\s+/m).filter(s => s.trim() !== ""); // Split by markdown list items
+    sections["Key Scenes/Events"] = sceneItems.map(item => {
+      const match = item.match(/\[(.*?)\]\s*(.*)/); // Attempt to find timestamp and description
+      if (match) {
+        return { timestamp: match[1], description: match[2].trim() };
+      }
+      return { description: item.trim() }; // Fallback if no timestamp
+    });
+  }
+
+  if (sections["Objects and Elements"] && typeof sections["Objects and Elements"] === 'string') {
+    const objectsMd = sections["Objects and Elements"] as string;
+    sections["Objects and Elements"] = objectsMd.split(/^\s*\*\s+/m).filter(s => s.trim() !== "").map(s => s.trim());
+  }
+
+  return sections;
+};
 
 async function getSummary(transcript: string) {
   const response = await fetch(`/api/summarize`, {
@@ -29,7 +98,9 @@ async function getSummary(transcript: string) {
   return await response.json();
 }
 
-export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
+export function AnalysisRenderer(props: AnalysisRendererProps) {
+  const { error: parentError, data, seekToTime } = props; // Destructure props
+
   const lastSecond = useMemo(() => {
     return data?.length ? Math.ceil(Number(data[data.length - 1].endTimeMs) / 1000) : 0;
   }, [data]);
@@ -37,19 +108,34 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeRange, setTimeRange] = useState<[number, number]>([0, lastSecond]);
   
-  // Update timeRange.end when lastSecond changes
   useEffect(() => {
     setTimeRange(prev => [prev[0], lastSecond]);
   }, [lastSecond]);
   
   const [summary, setSummary] = useState("");
+  const [parsedSummarySections, setParsedSummarySections] = useState<ParsedAnalysisSections | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [selectedSegments, setSelectedSegments] = useState<number[]>([]);
+  const [granularity, setGranularity] = useState<string>("Standard Analysis");
+  const [rendererError, setRendererError] = useState<string | null>(parentError); // Internal error state
+
+  useEffect(() => {
+    setRendererError(parentError); // Sync with parent error prop
+  }, [parentError]);
+
+  const handleGranularityChange = (newGranularity: string) => {
+    if (granularity !== newGranularity) {
+      setGranularity(newGranularity);
+      setParsedSummarySections(null); // Clear existing parsed summary
+      setSummary(""); // Clear existing raw summary
+      setRendererError(null); // Clear any local errors related to summary display
+    }
+  };
+
   const filteredSegments = getSegmentsInRange(data, timeRange[0], timeRange[1]);
   const textChunks = breakIntoChunks(filteredSegments);
   const videoId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('videoId') : '';
 
-  // Get segments based on selection
   const getSelectedTranscript = () => {
     if (selectedSegments.length === 0) {
       return textChunks?.join(" "); // Use time range if no segments selected
@@ -66,12 +152,36 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
     }
 
     setIsSummaryLoading(true);
+    setParsedSummarySections(null); // Clear previous results
+    setSummary("");
+    setRendererError(null); // Clear previous errors
     const transcriptToSummarize = getSelectedTranscript();
+
     try {
-      const { data } = await getSummary(transcriptToSummarize);
-      setSummary(data);
-    } catch (error) {
-      console.error("Error summarizing:", error);
+      const response = await fetch(`/api/summarize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: transcriptToSummarize, granularity: granularity }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API request failed with status ${response.status}`);
+      }
+      const { data: rawSummary } = await response.json();
+
+      setSummary(rawSummary);
+      if (rawSummary) {
+        const parsed = parseGeminiMarkdown(rawSummary);
+        setParsedSummarySections(parsed);
+      } else {
+        // If rawSummary is empty or null from a successful response
+        setParsedSummarySections({}); // Set to empty object to indicate no sections found
+      }
+    } catch (err: any) {
+      console.error("Error summarizing:", err);
+      setRendererError(err.message || "Failed to fetch summary.");
+      setParsedSummarySections(null);
     } finally {
       setIsSummaryLoading(false);
     }
@@ -96,6 +206,14 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black text-white pb-12">
+      {rendererError && ( // Display internal or parent error
+        <div className="container mx-auto p-4 max-w-5xl relative z-10 mt-8">
+          <div className="bg-red-800/70 border border-red-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl text-white">
+            <h2 className="text-xl font-semibold mb-2">Could not load analysis:</h2>
+            <p>{rendererError}</p>
+          </div>
+        </div>
+      )}
       {/* Background gradient elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-[radial-gradient(circle_at_center,rgba(255,0,0,0.08),transparent_70%)]" />
@@ -173,36 +291,27 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-4">
                 <div className="flex items-center gap-3">
                   <FileText className="w-5 h-5 text-[#FF0000]" />
-                  <h2 className="text-lg font-semibold">Transcript</h2>
+                  <h2 className="text-lg font-semibold">Transcript Controls</h2>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={selectAllSegments}
-                    className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800"
-                  >
-                    Select All
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={clearSelection}
-                    className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800"
-                  >
-                    Clear Selection
-                  </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Granularity Buttons */}
+                  <Button variant={getButtonVariant(granularity, "Quick Summary")} size="sm" onClick={() => handleGranularityChange("Quick Summary")} className="text-xs">Quick Summary</Button>
+                  <Button variant={getButtonVariant(granularity, "Standard Analysis")} size="sm" onClick={() => handleGranularityChange("Standard Analysis")} className="text-xs">Standard Analysis</Button>
+                  <Button variant={getButtonVariant(granularity, "Detailed Breakdown")} size="sm" onClick={() => handleGranularityChange("Detailed Breakdown")} className="text-xs">Detailed Breakdown</Button>
+
+                  <Button variant="outline" size="sm" onClick={selectAllSegments} className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800">Select All</Button>
+                  <Button variant="outline" size="sm" onClick={clearSelection} className="text-xs border-zinc-600 hover:bg-zinc-700 bg-zinc-800">Clear</Button>
                   <Button
-                    disabled={isSummaryLoading || selectedSegments.length === 0}
-                    className="bg-gradient-to-r from-[#FF0000] to-[#FF5050] hover:shadow-lg hover:shadow-[#FF0000]/20 border-0 transition-all duration-200 text-xs"
+                    disabled={isSummaryLoading || !textChunks || textChunks.length === 0}
+                    className="bg-gradient-to-r from-[#FF0000] to-[#FF5050] hover:shadow-lg hover:shadow-[#FF0000]/20 border-0 transition-all duration-200 text-xs px-3"
                     onClick={handleSummarize}
                     size="sm"
                   >
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    {isSummaryLoading ? "Summarizing..." : "Summarize Selection"}
+                    <Sparkles className="w-3 h-3 mr-1.5" />
+                    {isSummaryLoading ? "Analyzing..." : "Analyze Selection"}
                   </Button>
                 </div>
               </div>
@@ -226,17 +335,142 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
             </motion.div>
           ) : null}
 
-          {/* Summary Section */}
-          {isSummaryLoading ? (
-            <motion.div 
+          {/* Parsed Summary Sections */}
+          {isSummaryLoading && (
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
             >
               <VideoProcessingLoader />
             </motion.div>
-          ) : summary ? (
-            <motion.div 
+          )}
+
+          {!isSummaryLoading && parsedSummarySections && Object.keys(parsedSummarySections).length > 0 && (
+            <>
+              {parsedSummarySections["Overall Summary"] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <Sparkles className="w-5 h-5 text-[#FF0000]" />
+                    <h2 className="text-lg font-semibold">Overall Summary</h2>
+                  </div>
+                  <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
+                    <Markdown className="prose prose-invert max-w-none prose-p:leading-relaxed prose-p:my-3 prose-h3:text-zinc-300 prose-h2:text-white prose-li:text-zinc-300">
+                      {parsedSummarySections["Overall Summary"]}
+                    </Markdown>
+                  </div>
+                </motion.div>
+              )}
+
+              {parsedSummarySections["Key Scenes/Events"] && Array.isArray(parsedSummarySections["Key Scenes/Events"]) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <Clock className="w-5 h-5 text-[#FF0000]" />
+                    <h2 className="text-lg font-semibold">Key Scenes/Events</h2>
+                  </div>
+                  <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60 space-y-3">
+                    {(parsedSummarySections["Key Scenes/Events"] as ParsedKeyScene[]).map((scene, index) => {
+                      const startTimeSeconds = scene.timestamp ? parseTimestampToSeconds(scene.timestamp) : null;
+                      const isClickable = seekToTime && startTimeSeconds !== null;
+                      return (
+                        <div
+                          key={index}
+                          className={`p-3 bg-zinc-800/50 rounded-md border border-zinc-700/50 ${isClickable ? 'cursor-pointer hover:border-[#FF5050]/70 hover:bg-zinc-700/50' : ''}`}
+                          onClick={() => {
+                            if (isClickable && startTimeSeconds !== null) {
+                              seekToTime(startTimeSeconds);
+                            }
+                          }}
+                        >
+                          {scene.timestamp && (
+                            <p className={`text-xs font-mono mb-1 ${isClickable ? 'text-[#FF5050]' : 'text-zinc-400'}`}>
+                              [{scene.timestamp}]
+                            </p>
+                          )}
+                          <p className="text-sm text-zinc-300">{scene.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
+              {parsedSummarySections["Objects and Elements"] && Array.isArray(parsedSummarySections["Objects and Elements"]) && (
+                 <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                    className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      {/* Using Search as a generic icon for Objects/Elements */}
+                      <Search className="w-5 h-5 text-[#FF0000]" />
+                      <h2 className="text-lg font-semibold">Objects and Elements</h2>
+                    </div>
+                    <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
+                      <ul className="list-disc list-inside space-y-1 text-sm text-zinc-300">
+                        {(parsedSummarySections["Objects and Elements"] as string[]).map((item, index) => (
+                          <li key={index}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+              )}
+
+              {parsedSummarySections["Sentiment Analysis"] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    {/* Using Sparkles as a generic icon for Sentiment */}
+                    <Sparkles className="w-5 h-5 text-[#FF0000]" />
+                    <h2 className="text-lg font-semibold">Sentiment Analysis</h2>
+                  </div>
+                  <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
+                    <Markdown className="prose prose-invert max-w-none prose-p:leading-relaxed">
+                      {parsedSummarySections["Sentiment Analysis"]}
+                    </Markdown>
+                  </div>
+                </motion.div>
+              )}
+
+              {parsedSummarySections["Actionable Insights (if any)"] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                  className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                     {/* Using FileText as a generic icon for Actionable Insights */}
+                    <FileText className="w-5 h-5 text-[#FF0000]" />
+                    <h2 className="text-lg font-semibold">Actionable Insights</h2>
+                  </div>
+                  <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
+                    <Markdown className="prose prose-invert max-w-none prose-p:leading-relaxed">
+                      {parsedSummarySections["Actionable Insights (if any)"]}
+                    </Markdown>
+                  </div>
+                </motion.div>
+              )}
+            </>
+          )}
+
+          {!isSummaryLoading && !parsedSummarySections && summary && !rendererError && ( // Fallback for old summary or parse failure (and no active error)
+             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -244,13 +478,26 @@ export function AnalysisRenderer({ error, data }: AnalysisRendererProps) {
             >
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-5 h-5 text-[#FF0000]" />
-                <h2 className="text-lg font-semibold">AI Summary</h2>
+                <h2 className="text-lg font-semibold">AI Summary (Raw)</h2>
               </div>
               <div className="bg-zinc-900/80 rounded-lg p-4 border border-zinc-700/60">
                 <Markdown className="prose prose-invert max-w-none prose-p:leading-relaxed prose-p:my-3 prose-h3:text-zinc-300 prose-h2:text-white prose-li:text-zinc-300">{summary}</Markdown>
               </div>
             </motion.div>
-          ) : null}
+          )}
+
+          {!isSummaryLoading && !summary && !parsedSummarySections && !rendererError && ( // Message if no summary, no parsed sections, and no error
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-6 shadow-xl text-center"
+            >
+              <Sparkles className="w-8 h-8 text-[#FF0000] mx-auto mb-3" />
+              <p className="text-zinc-300">Select transcript segments and click "Summarize Selection" to generate an AI analysis.</p>
+              <p className="text-xs text-zinc-500 mt-1">If you've already summarized, but see no results, the AI might not have provided a summary for the selection.</p>
+            </motion.div>
+          )}
+
         </motion.div>
       </div>
     </div>

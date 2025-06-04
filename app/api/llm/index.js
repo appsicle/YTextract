@@ -1,5 +1,5 @@
-import { getClaudeResponse } from './claude-service';
+import { getGeminiResponse } from './gemini-service';
 
 export {
-  getClaudeResponse
+  getGeminiResponse
 }
