@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "./home";
-const inter = Inter({ subsets: ["latin"] });
+const plusJakarta = Plus_Jakarta_Sans({ 
+  subsets: ["latin"],
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  variable: '--font-jakarta'
+});
 
 export const metadata: Metadata = {
   title: "YTExtract",
@@ -17,9 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={plusJakarta.className}>
         <Suspense fallback={<div>Loading...</div>}>
-          <Navbar />
           {children}
         </Suspense>
       </body>
